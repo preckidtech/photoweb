@@ -1,6 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Senior Engineering: Defining the 'brandBlue' variable so 
+   the 'suggestCanonicalClasses' warnings disappear. */
+@theme {
+  --color-brandBlue: #003366;
+  --color-brandWhite: #F8F9FA;
+  
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-inter);
+}
 
 :root {
   --background: #F8F9FA;
@@ -8,15 +16,18 @@
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  scroll-behavior: smooth;
-  /* Ensures crisp font rendering on high-end displays */
   -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
 }
 
-/* Luxury Detail: Highlighted text matches Benedicta's Brand Blue */
-::selection {
-  background-color: #003366;
-  color: #ffffff;
+/* Bulletproof Spinner Animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
