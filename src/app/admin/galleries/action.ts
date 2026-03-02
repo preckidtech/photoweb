@@ -50,3 +50,4 @@ export async function createGallery(formData: FormData) {
   // Optional: Redirect Benedicta to the upload page for the new gallery
   redirect(`/admin/uploads?galleryId=${data.id}`);
 }
+// setup
