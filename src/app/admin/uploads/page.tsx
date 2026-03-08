@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { uploadPhotos, getActiveVaults } from "./action"; 
 
 export default function AdminUploads() {
   const [galleries, setGalleries] = useState<any[]>([]);
-  
-  // SENIOR ENGINEERING: These now accumulate data instead of replacing it
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   
@@ -14,7 +13,6 @@ export default function AdminUploads() {
   const [isPublicOnly, setIsPublicOnly] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Real-time Progress Tracking State
   const [progress, setProgress] = useState(0);
   const [uploadText, setUploadText] = useState("");
   const [isComplete, setIsComplete] = useState(false);
@@ -27,40 +25,20 @@ export default function AdminUploads() {
     fetchGalleries();
   }, []);
 
-  // Memory Leak Prevention: Clean up URLs when component unmounts
   useEffect(() => {
     return () => {
       previews.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [previews]);
 
-  // UPGRADE: Accumulates new files alongside existing ones
-  const handleFiles = (newFiles: File[]) => {
-    setSelectedFiles((prev) => [...prev, ...newFiles]);
-    setPreviews((prev) => [
-      ...prev,
-      ...newFiles.map(file => URL.createObjectURL(file))
-    ]);
-  };
-
-  // UPGRADE: Allows removing individual files before uploading
-  const removeFile = (indexToRemove: number) => {
-    setSelectedFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-    setPreviews((prev) => {
-      const updatedPreviews = [...prev];
-      // Free up browser memory immediately
-      URL.revokeObjectURL(updatedPreviews[indexToRemove]);
-      updatedPreviews.splice(indexToRemove, 1);
-      return updatedPreviews;
-    });
+  const handleFiles = (files: File[]) => {
+    previews.forEach((url) => URL.revokeObjectURL(url));
+    setSelectedFiles(files);
+    setPreviews(files.map(file => URL.createObjectURL(file)));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFiles(Array.from(e.target.files));
-      // Reset the input so the browser allows selecting the exact same file again if needed
-      e.target.value = ""; 
-    }
+    if (e.target.files) handleFiles(Array.from(e.target.files));
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -76,9 +54,7 @@ export default function AdminUploads() {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFiles(Array.from(e.dataTransfer.files));
-    }
+    if (e.dataTransfer.files) handleFiles(Array.from(e.dataTransfer.files));
   };
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -114,7 +90,6 @@ export default function AdminUploads() {
       }
     }
 
-    // Success State Sequence
     setIsComplete(true);
     setUploadText("Upload Successfully Completed!");
     setProgress(100);
@@ -122,8 +97,6 @@ export default function AdminUploads() {
     setTimeout(() => {
       setIsUploading(false);
       setIsComplete(false);
-      // Clean up memory for all uploaded files
-      previews.forEach((url) => URL.revokeObjectURL(url));
       setSelectedFiles([]);
       setPreviews([]);
       setProgress(0);
@@ -140,9 +113,7 @@ export default function AdminUploads() {
       </header>
 
       <section className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-xl border border-slate-50 relative overflow-hidden">
-        
         <form onSubmit={handleUpload} id="upload-form" className={`space-y-10 transition-opacity duration-500 ${isUploading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-          
           <div className="space-y-3">
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-2">Target Destination</label>
             <select 
@@ -169,27 +140,16 @@ export default function AdminUploads() {
             </div>
           )}
 
-          {/* DRAG AND DROP ZONE */}
           <div className="space-y-6">
             <div 
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={`relative border-2 border-dashed rounded-[2.5rem] py-20 text-center transition-all duration-300 ${
-                isDragging 
-                  ? "border-[#003366] bg-[#003366]/5 scale-[1.02]" 
-                  : "border-slate-200 hover:border-[#003366]/30 hover:bg-slate-50/50"
+                isDragging ? "border-[#003366] bg-[#003366]/5 scale-[1.02]" : "border-slate-200 hover:border-[#003366]/30 hover:bg-slate-50/50"
               }`}
             >
-              <input 
-                type="file" 
-                name="files" 
-                multiple 
-                onChange={handleFileChange} 
-                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                // Only require native HTML validation if no files are staged yet
-                required={selectedFiles.length === 0} 
-              />
+              <input type="file" name="files" multiple onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" required={selectedFiles.length === 0} />
               <div className="space-y-2 pointer-events-none">
                 <svg className={`w-10 h-10 mx-auto transition-colors duration-300 ${isDragging ? "text-[#003366]" : "text-slate-300"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -200,93 +160,48 @@ export default function AdminUploads() {
               </div>
             </div>
 
-            {/* UPGRADE: INTERACTIVE STAGED ASSETS GALLERY */}
             {previews.length > 0 && (
               <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                <div className="flex justify-between items-end mb-6">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Staged Assets
-                  </p>
-                  <p className="text-xs font-bold text-[#003366] bg-white px-4 py-2 rounded-full shadow-sm">
-                    {selectedFiles.length} Selected
-                  </p>
+                <div className="flex justify-between items-end mb-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Staged Assets</p>
+                  <p className="text-xs font-bold text-[#003366] bg-white px-3 py-1 rounded-full shadow-sm">{selectedFiles.length} Selected</p>
                 </div>
-                
-                <div className="flex flex-wrap gap-4 max-h-64 overflow-y-auto custom-scrollbar p-2">
+                <div className="flex flex-wrap gap-3 max-h-48 overflow-y-auto custom-scrollbar">
                   {previews.map((src, idx) => (
-                    <div key={idx} className="relative group">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img 
-                        src={src} 
-                        className="w-20 h-20 object-cover rounded-2xl shadow-sm border border-slate-200" 
-                        alt={`Preview ${idx + 1}`} 
-                      />
-                      
-                      {/* The Delete 'X' Button */}
-                      <button
-                        type="button"
-                        onClick={() => removeFile(idx)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:bg-red-600 hover:scale-110 z-20"
-                        title="Remove image"
-                      >
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
+                    <img key={idx} src={src} className="w-16 h-16 object-cover rounded-2xl shadow-sm border border-slate-200" alt={`Preview ${idx + 1}`} />
                   ))}
                 </div>
               </div>
             )}
           </div>
 
-          <button 
-            type="submit"
-            disabled={isUploading || selectedFiles.length === 0} 
-            className="w-full py-6 bg-[#003366] text-white font-bold rounded-2xl shadow-xl flex items-center justify-center gap-3 disabled:bg-slate-100 disabled:text-slate-400 transition-all active:scale-95 hover:bg-[#002244]"
-          >
+          <button type="submit" disabled={isUploading || selectedFiles.length === 0} className="w-full py-6 bg-[#003366] text-white font-bold rounded-2xl shadow-xl flex items-center justify-center gap-3 disabled:bg-slate-100 disabled:text-slate-400 transition-all active:scale-95 hover:bg-[#002244]">
             Initialize Upload
           </button>
         </form>
 
-        {/* PROGRESS BAR OVERLAY */}
-        {isUploading && (
-          <div className="absolute inset-0 bg-white/95 backdrop-blur-md z-20 flex flex-col items-center justify-center p-12">
-            <div className="w-full max-w-md space-y-6">
-              
-              {isComplete && (
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
+        <AnimatePresence>
+          {isUploading && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-white/95 backdrop-blur-md z-20 flex flex-col items-center justify-center p-12">
+              <div className="w-full max-w-md space-y-6">
+                {isComplete && (
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+                <div className="flex justify-between items-end">
+                  <p className={`text-xs font-bold uppercase tracking-widest truncate pr-4 ${isComplete ? 'text-green-600' : 'text-[#003366]'}`}>{uploadText}</p>
+                  <p className={`text-4xl font-light ${isComplete ? 'text-green-600' : 'text-[#003366]'}`}>{progress}%</p>
                 </div>
-              )}
-
-              <div className="flex justify-between items-end">
-                <p className={`text-xs font-bold uppercase tracking-widest truncate pr-4 ${isComplete ? 'text-green-600' : 'text-[#003366]'}`}>
-                  {uploadText}
-                </p>
-                <p className={`text-4xl font-light ${isComplete ? 'text-green-600' : 'text-[#003366]'}`}>
-                  {progress}%
-                </p>
+                <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                  <div className={`h-full transition-all duration-300 ease-out ${isComplete ? 'bg-green-500' : 'bg-[#003366]'}`} style={{ width: `${progress}%` }} />
+                </div>
               </div>
-
-              <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                <div 
-                  className={`h-full transition-all duration-300 ease-out ${isComplete ? 'bg-green-500' : 'bg-[#003366]'}`}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-
-              {!isComplete && (
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest text-center animate-pulse">
-                  Please keep this window open
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
     </div>
   );

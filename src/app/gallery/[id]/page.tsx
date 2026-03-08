@@ -2,17 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import FaceSearchModal from "@/components/FaceSearchModal";
 import { getVaultPhotos } from "./action";
 import { useRouter, useParams } from "next/navigation"; 
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
+/**
+ * SENIOR ENGINEERING: VIP Private Client Gallery (FR-202).
+ * Optimized for high-resolution asset delivery and bulk archiving.
+ */
 export default function ClientGallery() {
   const [photos, setPhotos] = useState<any[]>([]);
-  const [filteredIds, setFilteredIds] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   
   const router = useRouter();
@@ -24,24 +25,22 @@ export default function ClientGallery() {
 
     async function fetchPhotos() {
       const result = await getVaultPhotos(galleryId);
+      
+      // Security Handshake: Redirect if session is invalid
       if (result.error === "unauthorized") {
         router.push(`/gallery/${galleryId}/login`);
         return;
       }
+      
       if (result.photos) setPhotos(result.photos);
       setLoading(false);
     }
     fetchPhotos();
   }, [params, router]);
 
-  // UI LOGIC: Switch between showing all photos or only AI matches
-  const displayPhotos = filteredIds 
-    ? photos.filter(p => filteredIds.includes(p.id)) 
-    : photos;
-
   /**
-   * SENIOR ENGINEERING: Forced Individual Download
-   * Bypasses "Open in New Tab" behavior by fetching asset as a Blob.
+   * CORE FEATURE: Individual High-Res Download.
+   * Forces the browser to trigger a download dialog instead of opening a new tab.
    */
   const handleIndividualDownload = async (url: string, filename: string) => {
     try {
@@ -50,24 +49,26 @@ export default function ClientGallery() {
       saveAs(blob, filename);
     } catch (error) {
       console.error("Individual download failed:", error);
+      // Fallback to standard behavior if fetch is blocked
       window.open(url, "_blank");
     }
   };
 
   /**
-   * VIP VAULT ENGINE: Bulk Download (Zip)
-   * Bundles the current view into a professional archive.
+   * CORE FEATURE: Bulk Archive Engine (Zip).
+   * Bundles all assets into a branded .zip archive for the client.
    */
   const handleDownloadAll = async () => {
-    if (displayPhotos.length === 0) return;
+    if (photos.length === 0) return;
     setIsDownloadingAll(true);
     
     const zip = new JSZip();
-    const folder = zip.folder("Benedicta_Visual_Studio_Collection");
+    const folder = zip.folder(`Benedicta_Studio_${params?.id || "Vault"}`);
 
     try {
+      // Parallel fetch for speed
       await Promise.all(
-        displayPhotos.map(async (photo, index) => {
+        photos.map(async (photo, index) => {
           const response = await fetch(photo.signedUrl);
           const blob = await response.blob();
           const fileName = photo.metadata?.original_filename || `Asset_${index + 1}.jpg`;
@@ -76,7 +77,7 @@ export default function ClientGallery() {
       );
 
       const content = await zip.generateAsync({ type: "blob" });
-      saveAs(content, `Collection_${params?.id || "Vault"}.zip`);
+      saveAs(content, `Benedicta_Visual_Studio_Collection.zip`);
     } catch (error) {
       console.error("Bulk download failed:", error);
       alert("Archive creation failed. Please try individual downloads.");
@@ -100,57 +101,41 @@ export default function ClientGallery() {
             </p>
           </motion.div>
 
-          <div className="flex flex-wrap gap-4 w-full md:w-auto">
-            <button 
-              onClick={() => setIsAiModalOpen(true)}
-              className="flex-1 md:flex-none px-6 py-4 bg-white border border-slate-200 text-[#003366] text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm hover:shadow-md transition-all active:scale-95"
-            >
-              AI Face Search
-            </button>
+          <div className="flex gap-4 w-full md:w-auto">
             <button 
               onClick={handleDownloadAll}
-              disabled={isDownloadingAll || loading}
-              className="flex-1 md:flex-none px-8 py-4 bg-[#003366] text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-xl hover:bg-[#002244] transition-all active:scale-95 disabled:bg-slate-300 flex items-center justify-center gap-3"
+              disabled={isDownloadingAll || loading || photos.length === 0}
+              className="w-full md:w-auto px-10 py-5 bg-[#003366] text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-xl hover:bg-[#002244] transition-all active:scale-95 disabled:bg-slate-300 flex items-center justify-center gap-3"
             >
               {isDownloadingAll ? (
                 <>
                   <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Archiving...
+                  Creating Archive...
                 </>
-              ) : filteredIds ? "Download Matches" : "Download Vault"}
+              ) : (
+                "Download Entire Vault"
+              )}
             </button>
           </div>
         </header>
-
-        {/* AI FILTER INDICATOR */}
-        {filteredIds && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-10 flex justify-center">
-            <button 
-              onClick={() => setFilteredIds(null)}
-              className="px-6 py-2 bg-[#003366]/5 text-[#003366] text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-[#003366]/10 transition-all border border-[#003366]/10"
-            >
-              Showing {displayPhotos.length} Matches • Clear Filter
-            </button>
-          </motion.div>
-        )}
 
         {/* MASONRY PHOTO GRID */}
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
           <AnimatePresence mode="popLayout">
             {loading ? (
+              // Luxury Skeleton State
               [1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="w-full bg-slate-200 rounded-3xl animate-pulse break-inside-avoid" style={{ height: `350px` }} />
+                <div key={i} className="w-full bg-slate-200 rounded-3xl animate-pulse break-inside-avoid mb-6" style={{ height: `350px` }} />
               ))
-            ) : displayPhotos.length > 0 ? (
-              displayPhotos.map((photo, index) => (
+            ) : photos.length > 0 ? (
+              photos.map((photo, index) => (
                 <motion.div
                   key={photo.id}
                   layout
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.05, duration: 0.5 }}
-                  className="relative group rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-2xl transition-all duration-500 break-inside-avoid mb-6"
+                  className="relative group rounded-[2.5rem] overflow-hidden bg-white shadow-sm hover:shadow-2xl transition-all duration-500 break-inside-avoid mb-6"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
@@ -160,9 +145,10 @@ export default function ClientGallery() {
                     loading="lazy"
                   />
                   
+                  {/* INDIVIDUAL DOWNLOAD HOVER */}
                   <div className="absolute inset-0 bg-[#003366]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm">
                     <button 
-                      onClick={() => handleIndividualDownload(photo.signedUrl, photo.metadata?.original_filename || `photo_${index}.jpg`)}
+                      onClick={() => handleIndividualDownload(photo.signedUrl, photo.metadata?.original_filename || `Asset_${index}.jpg`)}
                       className="p-5 bg-white rounded-full text-[#003366] shadow-2xl hover:scale-110 transition-transform active:scale-90"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,22 +160,12 @@ export default function ClientGallery() {
               ))
             ) : (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full py-32 text-center">
-                <p className="text-slate-400 text-sm font-medium italic">No assets matching your search criteria were found.</p>
+                <p className="text-slate-400 text-sm font-medium italic">This vault is currently empty.</p>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
-
-      {/* FIXED AI MODAL BRIDGE */}
-      <FaceSearchModal 
-        isOpen={isAiModalOpen} 
-        onClose={() => setIsAiModalOpen(false)}
-        allPhotos={photos} // REQUIRED: Critical data bridge for the neural network
-        onScanComplete={(matchedIds: string[]) => {
-          setFilteredIds(matchedIds);
-        }}
-      />
     </div>
   );
 }

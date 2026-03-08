@@ -14,7 +14,7 @@ export async function resolveLead(leadId: number) {
     .from("inquiries")
     .update({ status: 'completed' })
     .eq('id', leadId);
-
+    
   if (error) {
     console.error("Failed to resolve lead:", error.message);
     throw new Error(error.message);
