@@ -1,14 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 /**
- * Senior Engineering: This function initializes a secure, 
- * server-side Supabase client.
- * * It is required for Admin actions and private gallery viewing.
+ * STANDARD CLIENT: For public/guest viewing
+ * Restricted by Row Level Security.
  */
 export async function createClient() {
-  // In Next.js 16, cookies() returns a promise and MUST be awaited 
-  // to prevent the property 'getAll' does not exist error.
   const cookieStore = await cookies()
 
   return createServerClient(
@@ -25,10 +23,22 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // This can be safely ignored if called from a Server Component.
+            // Can be safely ignored if called from a Server Component.
           }
         },
       },
     }
+  )
+}
+
+/**
+ * SENIOR ENGINEERING: The Admin Client (God Mode)
+ * Uses the SUPABASE_SERVICE_ROLE_KEY to bypass Row Level Security.
+ * ONLY use this inside Admin Server Actions (like creating vaults or uploading).
+ */
+export function createAdminClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }

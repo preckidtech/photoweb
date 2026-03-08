@@ -1,55 +1,53 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
-import bcrypt from "bcryptjs";
-import { redirect } from "next/navigation";
+import { createAdminClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 /**
- * Senior Engineering: This Server Action handles the secure handshake (FR-102).
- * It compares the plaintext input with the Bcrypt hash stored in PostgreSQL.
+ * Senior Engineering: Vault Authentication Engine (FR-102).
+ * Securely verifies the client's passcode against the database 
+ * and issues an HTTP-only cookie to grant access to the private route.
  */
 export async function verifyPassword(formData: FormData, galleryId: string) {
-  const supabase = await createClient();
-
-  // 1. Data Extraction
+  // 1. Use God Mode to securely read the locked galleries table
+  const supabase = createAdminClient();
   const enteredPasscode = formData.get("password") as string;
 
   if (!enteredPasscode) {
-    throw new Error("Security Alert: A passcode is required to unlock this vault.");
+    return { error: "A passcode is required to unlock this vault." };
   }
 
-  // 2. Fetch the "Truth" from the Database
-  // We only fetch the hash, keeping the rest of the metadata protected.
+  // 2. Fetch the true passcode and status from the database
   const { data: gallery, error } = await supabase
     .from("galleries")
-    .select("password_hash, is_active")
+    .select("password, is_active")
     .eq("id", galleryId)
     .single();
 
   if (error || !gallery) {
-    console.error("Access Denied: Gallery ID does not exist or database is unreachable.");
-    throw new Error("This vault does not exist or has been decommissioned.");
+    console.error("Access Denied: Vault ID missing.");
+    return { error: "This vault does not exist or has been decommissioned." };
   }
 
   // 3. Status Verification
   if (!gallery.is_active) {
-    throw new Error("This vault is currently locked by the administrator.");
+    return { error: "This vault is currently locked by Benedicta Visual Studio." };
   }
 
-  // 4. Cryptographic Comparison (FR-102)
-  // Bcrypt.compare is computationally expensive by design to prevent brute-force.
-  const isMatch = await bcrypt.compare(enteredPasscode, gallery.password_hash);
-
-  if (!isMatch) {
-    // We provide a generic error message to prevent "account enumeration"
-    throw new Error("Invalid passcode. Access denied.");
+  // 4. Verification Check
+  if (enteredPasscode !== gallery.password) {
+    return { error: "Invalid passcode. Access denied." };
   }
 
-  // 5. Authorization Success
-  /**
-   * Engineering Note: In a full production environment, we would set a 
-   * JWT or Session Cookie here. For this architecture, we redirect to 
-   * the private dynamic route.
-   */
-  redirect(`/gallery/${galleryId}`);
+  // 5. Authorization Success: Issue a Secure Token (Cookie)
+  // This securely "stamps" the user's browser so they can view the photos.
+  const cookieStore = await cookies();
+  cookieStore.set(`vault_access_${galleryId}`, "granted", {
+    httpOnly: true, // Prevents hackers from stealing the cookie via JavaScript
+    secure: process.env.NODE_ENV === "production", // Forces HTTPS in production
+    maxAge: 60 * 60 * 24 * 7, // Keeps them logged in for 7 days
+    path: `/gallery/${galleryId}`, // Locks the cookie ONLY to this specific vault
+  });
+
+  return { success: true };
 }

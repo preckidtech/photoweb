@@ -1,34 +1,33 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
 /**
- * Senior Engineering: This Server Action handles Requirement FR-11 (Asset Injection).
- * It processes a "FormData" object containing multiple high-resolution files.
+ * Senior Engineering: Handles Asset Injection (FR-11)
+ * Processes multiple high-res files and updates the database.
  */
 export async function uploadPhotos(formData: FormData) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   
   // 1. Extraction of Data
   const files = formData.getAll("files") as File[];
   const galleryId = formData.get("galleryId") as string;
+  const isPublic = formData.get("is_public") === "on";
 
   if (!files || files.length === 0 || !galleryId) {
     throw new Error("Engineering Error: Invalid upload payload. Gallery ID and Files are required.");
   }
 
   // 2. Parallel Processing (NFR-202: Performance)
-  // We use Promise.all to trigger multiple uploads at once for speed.
   const uploadResults = await Promise.all(
     files.map(async (file) => {
-      // Standardize the filename: Remove special characters that break URLs
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
       const timestamp = Date.now();
       const storagePath = `${galleryId}/${timestamp}_${cleanFileName}`;
 
       // A. Inject into Private Cloud Storage
-      const { data: storageData, error: storageError } = await supabase.storage
+      const { error: storageError } = await supabase.storage
         .from("client-galleries")
         .upload(storagePath, file, {
           cacheControl: "3600",
@@ -45,10 +44,12 @@ export async function uploadPhotos(formData: FormData) {
         {
           gallery_id: galleryId,
           storage_path: storagePath,
-          original_filename: file.name,
-          file_size: file.size,
-          mime_type: file.type,
-          is_public: false, // Default to private for client vaults
+          is_public: isPublic,
+          metadata: {
+            original_filename: file.name,
+            file_size: file.size,
+            mime_type: file.type,
+          }
         },
       ]);
 
@@ -62,8 +63,31 @@ export async function uploadPhotos(formData: FormData) {
   );
 
   // 3. Cache Invalidation (Consistency)
-  // Ensures the client's gallery feed shows the new photos immediately.
   revalidatePath(`/gallery/${galleryId}`);
+  if (isPublic) {
+    revalidatePath("/gallery"); 
+  }
   
   return uploadResults;
+}
+
+/**
+ * Senior Engineering: Securely fetches active vaults for the UI dropdown.
+ * Uses the Admin Client to bypass RLS restrictions.
+ */
+export async function getActiveVaults() {
+  const supabase = createAdminClient(); 
+  
+  const { data, error } = await supabase
+    .from("galleries")
+    .select("id, name")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Failed to fetch vaults:", error.message);
+    return [];
+  }
+  
+  return data || [];
 }

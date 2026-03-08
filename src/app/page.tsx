@@ -104,7 +104,7 @@ export default function LandingPage() {
           >
             <h3 className="text-xs font-bold uppercase tracking-[0.5em] text-slate-400">The Philosophy</h3>
             <p className="text-2xl md:text-4xl font-light leading-relaxed">
-              "I don't just take photos; I capture the invisible threads of <span className="italic font-serif">emotion</span> that connect people to their most precious memories."
+              "I don't just take photos; I capture the invisible threads of <span className="italic font-serif ">emotion</span> that connect people to their most precious memories."
             </p>
             <div className="h-px w-20 bg-white/20 mx-auto mt-10" />
             <p className="text-sm font-serif italic text-slate-300">— Benedicta Okhunlun</p>

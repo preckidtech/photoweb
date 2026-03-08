@@ -39,7 +39,7 @@ export default function BoutiqueInquiry() {
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#1d1d1f]">Studio</p>
-                <p className="text-base text-slate-400 mt-2">Lagos, Nigeria</p>
+                <p className="text-base text-slate-400 mt-2">United Kingdom</p>
               </div>
             </div>
           </motion.div>
@@ -59,7 +59,7 @@ export default function BoutiqueInquiry() {
                 </div>
                 <div className="group relative">
                   <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 group-focus-within:text-[#003366] transition-colors">Email Address</label>
-                  <input type="email" placeholder="hello@example.com" className="w-full bg-transparent border-b border-slate-100 py-4 text-[17px] outline-none focus:border-[#003366] transition-all placeholder:text-slate-100" required />
+                  <input type="email" placeholder="johndoe@example.com" className="w-full bg-transparent border-b border-slate-100 py-4 text-[17px] outline-none focus:border-[#003366] transition-all placeholder:text-slate-100" required />
                 </div>
               </div>
 
@@ -70,6 +70,7 @@ export default function BoutiqueInquiry() {
                     <option>Editorial</option>
                     <option>Wedding</option>
                     <option>Portrait</option>
+                    <option>Personal</option>
                   </select>
                 </div>
                 <div className="group relative">
