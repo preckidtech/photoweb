@@ -3,7 +3,6 @@
 import { createAdminClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import * as faceapi from "face-api.js";
-import { Canvas, Image, ImageData } from "canvas";
 
 /**
  * Senior Engineering: AI-Aware Asset Injection Engine (MVP Final)
