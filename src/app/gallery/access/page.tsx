@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { getPublicVaults } from "./action"; // FIXED: Importing the secure fetcher
+import { getPublicVaults } from "./action";
 
 export default function GalleryAccess() {
   const [searchQuery, setSearchQuery] = useState("");
   const [galleries, setGalleries] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // FIXED: Fetch the data through the secure server action
   useEffect(() => {
     const fetchGalleries = async () => {
       const vaults = await getPublicVaults();
@@ -20,10 +19,11 @@ export default function GalleryAccess() {
     fetchGalleries();
   }, []);
 
-  // Real-time lightning-fast filtering based on the client's typing
-  const filteredGalleries = galleries.filter((g) =>
-    g.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // SENIOR ENGINEERING: Only filter and display if the user has typed at least 2 characters.
+  // This keeps the screen clean and protects client privacy.
+  const filteredGalleries = searchQuery.length >= 2 
+    ? galleries.filter((g) => g.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : [];
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] pt-32 pb-20 px-6 md:px-12">
@@ -53,7 +53,7 @@ export default function GalleryAccess() {
         >
           <input 
             type="text"
-            placeholder="Search by event name (e.g., 'Isaac Wedding')"
+            placeholder="Enter your event name (e.g., 'Isaac Wedding')"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-white border-none p-6 md:p-8 rounded-[2rem] shadow-xl focus:ring-4 focus:ring-[#003366]/10 outline-none text-[#003366] transition-all placeholder:text-slate-300 text-sm md:text-base"
@@ -65,27 +65,40 @@ export default function GalleryAccess() {
           </div>
         </motion.div>
 
-        {/* DIRECTORY GRID (Responsive) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <AnimatePresence mode="popLayout">
+        {/* DIRECTORY GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          <AnimatePresence mode="wait">
             {isLoading ? (
-              // Luxury Skeleton State while database responds
-              [1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-32 bg-slate-200 rounded-[2rem] animate-pulse" />
-              ))
+              // Loading State
+              <motion.div key="loading" className="col-span-full flex justify-center py-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#003366]"></div>
+              </motion.div>
+            ) : searchQuery.length < 2 ? (
+              // Empty State - Waiting for user to type
+              <motion.div 
+                key="empty"
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="col-span-full py-12 text-center"
+              >
+                <p className="text-slate-400 text-sm font-medium italic">
+                  Start typing to reveal your collection.
+                </p>
+              </motion.div>
             ) : filteredGalleries.length > 0 ? (
-              // Live Vault Links
+              // Results State
               filteredGalleries.map((gallery) => (
                 <motion.div
                   key={gallery.id}
-                  layout
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.3 }}
+                  className="col-span-full"
                 >
                   <Link href={`/gallery/${gallery.id}/login`}>
-                    <div className="group bg-white p-8 rounded-[2rem] border border-slate-50 shadow-sm hover:shadow-2xl hover:border-[#003366]/10 transition-all flex justify-between items-center cursor-pointer">
+                    <div className="group bg-white p-6 md:p-8 rounded-[2rem] border border-slate-50 shadow-sm hover:shadow-2xl hover:border-[#003366]/10 transition-all flex justify-between items-center cursor-pointer">
                       <div>
                         <h3 className="text-lg font-medium text-[#003366] group-hover:translate-x-2 transition-transform duration-300">
                           {gallery.name}
@@ -104,13 +117,17 @@ export default function GalleryAccess() {
                 </motion.div>
               ))
             ) : (
-              // Empty State
+              // No Match State
               <motion.div 
+                key="no-match"
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
-                className="col-span-full py-20 text-center"
+                exit={{ opacity: 0 }}
+                className="col-span-full py-12 text-center"
               >
-                <p className="text-slate-400 text-sm font-medium">No vaults match your search.</p>
+                <p className="text-slate-400 text-sm font-medium">
+                  No vaults found. Please check the spelling.
+                </p>
               </motion.div>
             )}
           </AnimatePresence>

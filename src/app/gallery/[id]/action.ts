@@ -3,11 +3,13 @@
 import { createAdminClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 
-/**
- * Senior Engineering: Secure Vault Fetcher (FR-101)
- * Validates the HTTP-only cookie before returning any highly sensitive media.
- */
 export async function getVaultPhotos(galleryId: string) {
+  // SENIOR ENGINEERING: Database Firewall
+  // Strictly prevents Next.js routing glitches from crashing the database
+  if (!galleryId || galleryId === "undefined") {
+    return { error: "unauthorized" };
+  }
+
   const cookieStore = await cookies();
   const accessCookie = cookieStore.get(`vault_access_${galleryId}`);
 

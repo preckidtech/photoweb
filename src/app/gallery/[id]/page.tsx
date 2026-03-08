@@ -4,21 +4,29 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import FaceSearchModal from "@/components/FaceSearchModal";
 import { getVaultPhotos } from "./action";
-import { useRouter } from "next/navigation";
+// FIXED: Using useParams for Next.js 15 safety
+import { useRouter, useParams } from "next/navigation"; 
 
-export default function ClientGallery({ params }: { params: { id: string } }) {
+export default function ClientGallery() {
   const [photos, setPhotos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  
   const router = useRouter();
+  const params = useParams(); // Safely grabs the ID from the URL
 
   useEffect(() => {
-    async function fetchPhotos() {
-      const result = await getVaultPhotos(params.id);
+    const galleryId = params?.id as string;
 
-      // If they don't have the cookie, kick them back to the login screen
+    // Wait until Next.js has fully mounted the URL before fetching
+    if (!galleryId) return;
+
+    async function fetchPhotos() {
+      const result = await getVaultPhotos(galleryId);
+
+      // If they don't have the cookie (or if the ID was invalid), kick them out
       if (result.error === "unauthorized") {
-        router.push(`/gallery/${params.id}/login`);
+        router.push(`/gallery/${galleryId}/login`);
         return;
       }
 
@@ -29,7 +37,7 @@ export default function ClientGallery({ params }: { params: { id: string } }) {
     }
 
     fetchPhotos();
-  }, [params.id, router]);
+  }, [params, router]);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] pt-32 pb-20 px-6 md:px-12">
@@ -59,12 +67,10 @@ export default function ClientGallery({ params }: { params: { id: string } }) {
           </div>
         </header>
 
-        {/* MASONRY PHOTO GRID (Highly Responsive) */}
-        
+        {/* MASONRY PHOTO GRID */}
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
           <AnimatePresence>
             {loading ? (
-              // Luxury Skeleton Loading State
               [1, 2, 3, 4, 5, 6].map((i) => (
                 <div 
                   key={i} 
@@ -89,7 +95,6 @@ export default function ClientGallery({ params }: { params: { id: string } }) {
                     loading="lazy"
                   />
                   
-                  {/* Individual Download Hover Overlay */}
                   <div className="absolute inset-0 bg-[#003366]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm">
                     <a 
                       href={photo.signedUrl} 
@@ -104,7 +109,6 @@ export default function ClientGallery({ params }: { params: { id: string } }) {
                 </motion.div>
               ))
             ) : (
-              // Empty State
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full py-32 text-center">
                 <p className="text-slate-400 text-sm font-medium">This vault is currently empty. Benedicta Visual Studio is preparing your assets.</p>
               </motion.div>
@@ -113,7 +117,6 @@ export default function ClientGallery({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* AI SEARCH MODAL */}
       <FaceSearchModal 
         isOpen={isAiModalOpen} 
         onClose={() => setIsAiModalOpen(false)}
