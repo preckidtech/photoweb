@@ -1,11 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    // Required for high-performance Server Actions in Next.js 16
-    serverActions: {
-      allowedOrigins: ['localhost:3000', '192.168.56.1:3000'],
-    },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co', // This allows all Supabase storage images
+      },
+    ],
   },
+  // Since we are using face-api.js, we must disable server-side minification 
+  // of the models to prevent corruption during build
+  serverExternalPackages: ['face-api.js'], 
 };
 
 export default nextConfig;

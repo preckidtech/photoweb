@@ -10,6 +10,7 @@ import { saveAs } from "file-saver";
 
 export default function ClientGallery() {
   const [photos, setPhotos] = useState<any[]>([]);
+  const [filteredIds, setFilteredIds] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
@@ -33,9 +34,14 @@ export default function ClientGallery() {
     fetchPhotos();
   }, [params, router]);
 
+  // UI LOGIC: Switch between showing all photos or only AI matches
+  const displayPhotos = filteredIds 
+    ? photos.filter(p => filteredIds.includes(p.id)) 
+    : photos;
+
   /**
    * SENIOR ENGINEERING: Forced Individual Download
-   * Fetches the image as a Blob to bypass "Open in New Tab" browser behavior.
+   * Bypasses "Open in New Tab" behavior by fetching asset as a Blob.
    */
   const handleIndividualDownload = async (url: string, filename: string) => {
     try {
@@ -43,17 +49,17 @@ export default function ClientGallery() {
       const blob = await response.blob();
       saveAs(blob, filename);
     } catch (error) {
-      console.error("Download failed:", error);
-      window.open(url, "_blank"); // Fallback
+      console.error("Individual download failed:", error);
+      window.open(url, "_blank");
     }
   };
 
   /**
    * VIP VAULT ENGINE: Bulk Download (Zip)
-   * Bundles all high-res assets into a single professional archive.
+   * Bundles the current view into a professional archive.
    */
   const handleDownloadAll = async () => {
-    if (photos.length === 0) return;
+    if (displayPhotos.length === 0) return;
     setIsDownloadingAll(true);
     
     const zip = new JSZip();
@@ -61,7 +67,7 @@ export default function ClientGallery() {
 
     try {
       await Promise.all(
-        photos.map(async (photo, index) => {
+        displayPhotos.map(async (photo, index) => {
           const response = await fetch(photo.signedUrl);
           const blob = await response.blob();
           const fileName = photo.metadata?.original_filename || `Asset_${index + 1}.jpg`;
@@ -111,28 +117,40 @@ export default function ClientGallery() {
                   <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Archiving...
                 </>
-              ) : "Download Vault"}
+              ) : filteredIds ? "Download Matches" : "Download Vault"}
             </button>
           </div>
         </header>
 
+        {/* AI FILTER INDICATOR */}
+        {filteredIds && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-10 flex justify-center">
+            <button 
+              onClick={() => setFilteredIds(null)}
+              className="px-6 py-2 bg-[#003366]/5 text-[#003366] text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-[#003366]/10 transition-all border border-[#003366]/10"
+            >
+              Showing {displayPhotos.length} Matches • Clear Filter
+            </button>
+          </motion.div>
+        )}
+
         {/* MASONRY PHOTO GRID */}
-        
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
           <AnimatePresence mode="popLayout">
             {loading ? (
               [1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="w-full bg-slate-200 rounded-3xl animate-pulse break-inside-avoid" style={{ height: `${Math.floor(Math.random() * (400 - 250 + 1) + 250)}px` }} />
+                <div key={i} className="w-full bg-slate-200 rounded-3xl animate-pulse break-inside-avoid" style={{ height: `350px` }} />
               ))
-            ) : photos.length > 0 ? (
-              photos.map((photo, index) => (
+            ) : displayPhotos.length > 0 ? (
+              displayPhotos.map((photo, index) => (
                 <motion.div
                   key={photo.id}
+                  layout
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.05, duration: 0.5 }}
-                  className="relative group rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-2xl transition-all duration-500 break-inside-avoid"
+                  className="relative group rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-2xl transition-all duration-500 break-inside-avoid mb-6"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
@@ -156,17 +174,21 @@ export default function ClientGallery() {
               ))
             ) : (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full py-32 text-center">
-                <p className="text-slate-400 text-sm font-medium">Preparing your assets...</p>
+                <p className="text-slate-400 text-sm font-medium italic">No assets matching your search criteria were found.</p>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
 
+      {/* FIXED AI MODAL BRIDGE */}
       <FaceSearchModal 
         isOpen={isAiModalOpen} 
         onClose={() => setIsAiModalOpen(false)}
-        onScanComplete={(descriptor: any) => console.log("AI Scan Complete", descriptor)}
+        allPhotos={photos} // REQUIRED: Critical data bridge for the neural network
+        onScanComplete={(matchedIds: string[]) => {
+          setFilteredIds(matchedIds);
+        }}
       />
     </div>
   );

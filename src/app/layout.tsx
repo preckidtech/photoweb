@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./global.css";
 import Link from "next/link";
-import Navbar from "@/components/Navbar"; // SENIOR ENGINEERING: Importing the client component
+import Navbar from "@/components/Navbar"; 
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
@@ -14,7 +14,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    /**
+     * SENIOR ENGINEERING: Added suppressHydrationWarning.
+     * This prevents build/runtime errors caused by browser extensions (like AdBlock or Password Managers)
+     * injecting attributes into the HTML before React hydrates.
+     */
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfair.variable} bg-[#F8F9FA] antialiased font-sans`}>
         
         {/* INJECTING THE INTERACTIVE NAVBAR */}
