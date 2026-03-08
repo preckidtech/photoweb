@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
             <div>
               <p className="text-[10px] text-slate-400 uppercase tracking-widest">
-                © 2026 Benedicta Okhunlun Studio
+                © 2026 Benedicta Okhunlun
               </p>
               <p className="text-[9px] text-slate-300 mt-2 italic font-serif">
                 Minimalism in Motion.

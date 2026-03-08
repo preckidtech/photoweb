@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function AboutPage() {
   // WhatsApp Configuration 
-  const whatsappNumber = "2340000000000"; // IMPORTANT: Update this number
+  const whatsappNumber = "447918915682"; // IMPORTANT: Update this number
   const whatsappMessage = encodeURIComponent("Hello Benedicta Visual Studio, I was reading your story on the About page and would like to connect.");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
@@ -67,7 +67,7 @@ export default function AboutPage() {
         >
           <div className="space-y-6 mt-4 text-base md:text-lg text-slate-500 font-light leading-relaxed">
             <p>
-              I am Benedicta Okhunlun, a visual artist and storyteller based in the UK. For me, the camera is not just a tool to record reality; it is an instrument to freeze the fleeting, invisible threads of emotion that connect us all.
+              I am Benedicta Okhunlun, a visual artist and storyteller based in the Stirling Scotland. For me, the camera is not just a tool to record reality; it is an instrument to freeze the fleeting, invisible threads of emotion that connect us all.
             </p>
             <p>
               My approach to photography is rooted in <strong className="font-semibold text-[#003366]">minimalism and intentionality</strong>. Whether it is an intimate wedding, a high-fashion editorial, or a personal branding session, I believe the most powerful images emerge when stripping away the noise to reveal the profound simplicity of the subject.

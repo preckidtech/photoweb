@@ -26,7 +26,7 @@ export default function LandingPage() {
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
 
-  const whatsappNumber = "2348141893501"; // IMPORTANT: Update this number
+  const whatsappNumber = "447918915682"; // IMPORTANT: Update this number
   const whatsappMessage = encodeURIComponent("Hello Benedicta Visual Studio, I am on your website and would like to inquire about a booking.");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 

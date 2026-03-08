@@ -30,7 +30,7 @@ export default function Navbar() {
             BENEDICTA <span className="font-light text-slate-300">OKHUNLUN</span>
           </span>
           <span className="text-[8px] font-bold tracking-[0.6em] text-slate-400 uppercase mt-1">
-            Visual Studio
+            {/* Visual Studio */}
           </span>
         </Link>
 

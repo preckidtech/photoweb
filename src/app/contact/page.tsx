@@ -28,7 +28,7 @@ export default function BoutiqueInquiry() {
       const message = `Hello Benedicta Visual Studio,\n\nI would like to inquire about a private commission.\n\n*Client Name:* ${formData.name}\n*Email:* ${formData.email}\n*Session Type:* ${formData.session}\n*Proposed Date:* ${formData.date}\n\n*The Vision:*\n${formData.vision}`;
 
       const encodedMessage = encodeURIComponent(message);
-      const phoneNumber = "2348141893501"; 
+      const phoneNumber = "447918915682"; 
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
       // 3. Smooth Redirect
@@ -75,10 +75,10 @@ export default function BoutiqueInquiry() {
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#1d1d1f]">Digital</p>
                 <p className="text-sm md:text-base text-slate-400 mt-2">WhatsApp Direct</p>
               </div>
-              <div>
+              {/* <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#1d1d1f]">Studio</p>
-                <p className="text-sm md:text-base text-slate-400 mt-2">Lagos, Nigeria</p>
-              </div>
+                <p className="text-sm md:text-base text-slate-400 mt-2">Stirling Scotland</p>
+              </div> */}
             </div>
           </motion.div>
 

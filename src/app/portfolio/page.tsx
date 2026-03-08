@@ -14,7 +14,7 @@ export default function PortfolioPage() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   // WhatsApp Configuration
-  const whatsappNumber = "2340000000000"; // IMPORTANT: Update this number
+  const whatsappNumber = "447918915682"; // IMPORTANT: Update this number
   const whatsappMessage = encodeURIComponent("Hello Benedicta Visual Studio, I am looking at your portfolio and would like to inquire about a booking.");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
