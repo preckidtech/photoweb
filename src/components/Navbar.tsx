@@ -9,10 +9,8 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
-  // Helper to close mobile menu when a link is clicked
   const closeMenu = () => setIsOpen(false);
 
-  // Navigation Links Data Array for easy management
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
@@ -24,14 +22,22 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full z-[100] bg-white/90 backdrop-blur-xl border-b border-slate-100">
       <div className="max-w-7xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between relative z-50">
         
-        {/* LOGO */}
-        <Link href="/" className="flex flex-col relative z-50" onClick={closeMenu}>
-          <span className="text-xl md:text-2xl font-bold text-[#003366] tracking-tighter uppercase leading-none">
-            BENEDICTA <span className="font-light text-slate-300">OKHUNLUN</span>
-          </span>
-          <span className="text-[8px] font-bold tracking-[0.6em] text-slate-400 uppercase mt-1">
-            {/* Visual Studio */}
-          </span>
+        {/* LOGO: STRICT HEIGHT LOCK */}
+        <Link href="/" className="relative z-50 flex items-center" onClick={closeMenu}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src="/logo.png"
+            alt="Studio Logo" 
+            /* SENIOR ENGINEERING: 
+              We lock the height to h-10 (40px) on mobile and h-12 (48px) on desktop.
+              w-auto ensures the width scales perfectly without stretching. 
+            */
+            className="h-10 md:h-12 w-auto object-contain transition-opacity duration-300 hover:opacity-80"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement!.innerHTML = '<span class="font-serif italic text-xl font-bold text-[#003366]">BENEDICTA</span>';
+            }}
+          />
         </Link>
 
         {/* DESKTOP MENU */}
@@ -56,7 +62,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* MOBILE MENU TOGGLE (HAMBURGER) */}
+        {/* MOBILE MENU TOGGLE */}
         <button 
           onClick={() => setIsOpen(!isOpen)} 
           className="md:hidden p-2 text-[#003366] relative z-50 focus:outline-none"

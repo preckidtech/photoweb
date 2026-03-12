@@ -3,7 +3,7 @@
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
-import { getPublicPortfolio } from "./action";
+import { getPublicPortfolio } from "./action"; 
 
 /**
  * Senior Engineering: FR-101 (Public Portfolio Homepage).

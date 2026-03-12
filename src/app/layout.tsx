@@ -30,12 +30,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
 
-        {/* FOOTER */}
+       {/* FOOTER */}
         <footer className="bg-white py-16 px-6 border-t border-slate-50">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
-            <div>
+            
+            <div className="flex flex-col items-center md:items-start">
+              {/* BRAND LOGO INJECTION */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/logo.png" 
+                alt="Benedicta Okhunlun Studio" 
+                className="h-8 md:h-10 w-auto object-contain mb-4 opacity-90 hover:opacity-100 transition-opacity"
+              />
+              
               <p className="text-[10px] text-slate-400 uppercase tracking-widest">
-                © 2026 Benedicta Okhunlun
+                © {new Date().getFullYear()} All Rights Reserved
               </p>
               <p className="text-[9px] text-slate-300 mt-2 italic font-serif">
                 Minimalism in Motion.
@@ -50,7 +59,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
           </div>
         </footer>
-
       </body>
     </html>
   );
